@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora IMSS por embarazo | Macareno en Línea</title>
+  <style>
+    :root {
+      --color-primary: #F26B21;
+      --color-primary-dark: #d45715;
+      --color-bg: #ffffff;
+      --color-surface: #f7f7f8;
+      --color-text: #2f2f2f;
+      --color-muted: #666;
+      --color-border: #e4e4e7;
+      --ok: #1f9d55;
+      --warn: #d7a303;
+      --danger: #dc2626;
+      --radius: 14px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #fff, #fff9f5);
+      color: var(--color-text);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    .imss-wrap {
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 18px;
+    }
+
+    .imss-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .imss-header {
+      background: linear-gradient(120deg, var(--color-primary), #ff8a46);
+      color: #fff;
+      padding: 22px;
+    }
+
+    .imss-header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.2rem, 2vw, 1.65rem);
+    }
+
+    .imss-header p {
+      margin: 0;
+      opacity: .95;
+      font-size: 0.98rem;
+    }
+
+    .imss-content {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: .95rem;
+    }
+
+    .hint {
+      font-size: .84rem;
+      color: var(--color-muted);
+    }
+
+    input[type="date"],
+    select,
+    button {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--color-border);
+      font-size: 1rem;
+      padding: 10px 12px;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus,
+    summary:focus {
+      outline: 3px solid rgba(242, 107, 33, .22);
+      outline-offset: 1px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .btn {
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.02); }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #efefef;
+      color: var(--color-text);
+    }
+
+    .btn-ghost {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+    }
+
+    .result-card {
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      padding: 14px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+      font-size: .92rem;
+    }
+
+    .status-green { background: var(--ok); }
+    .status-yellow { background: var(--warn); color: #272727; }
+    .status-red { background: var(--danger); }
+
+    .summary-box {
+      margin-top: 10px;
+      border: 1px dashed #cfcfd4;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fff;
+      font-size: .95rem;
+    }
+
+    .summary-box ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+
+    details {
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .legal-note {
+      border-left: 4px solid var(--color-primary);
+      background: #fff9f5;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: .92rem;
+    }
+
+    .faq {
+      margin-top: 6px;
+      border-top: 1px solid var(--color-border);
+      padding-top: 10px;
+    }
+
+    .faq h3,
+    .seo-text h3 {
+      margin: 6px 0 8px;
+      font-size: 1.03rem;
+    }
+
+    .faq-item {
+      margin-bottom: 10px;
+    }
+
+    .faq-item strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .seo-text {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid var(--color-border);
+      font-size: .95rem;
+    }
+
+    /* Modal reporte */
+    .report-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .56);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 14px;
+    }
+
+    .report-panel {
+      width: min(900px, 100%);
+      max-height: 95vh;
+      overflow: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 16px 38px rgba(0, 0, 0, .22);
+    }
+
+    .report-body {
+      padding: 20px;
+    }
+
+    .report-title {
+      margin: 0;
+      color: var(--color-primary);
+      font-size: 1.2rem;
+    }
+
+    .report-subtitle {
+      margin: 2px 0 14px;
+      color: #555;
+      font-size: .95rem;
+    }
+
+    .report-section {
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .report-section h4 {
+      margin: 0 0 8px;
+      color: #333;
+    }
+
+    .report-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      border-top: 1px solid var(--color-border);
+      padding: 12px 20px;
+      background: #fafafa;
+      position: sticky;
+      bottom: 0;
+    }
+
+    .muted { color: var(--color-muted); }
+
+    @media (max-width: 760px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .imss-wrap { padding: 10px; margin: 14px auto; }
+      .imss-header, .imss-content { padding: 14px; }
+    }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      .report-panel, .report-panel * { visibility: visible !important; }
+      .report-overlay {
+        position: static;
+        display: block !important;
+        background: transparent;
+        padding: 0;
+      }
+      .report-panel {
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+        max-height: none;
+      }
+      .report-actions { display: none !important; }
+      @page { size: letter; margin: 15mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="imss-wrap">
+    <section class="imss-card" aria-label="Calculadora IMSS por embarazo">
+      <header class="imss-header">
+        <h1>¿Todavía tengo derecho al IMSS si me despidieron estando embarazada?</h1>
+        <p>Herramienta orientativa para revisar conservación de derechos y posible subsidio por maternidad.</p>
+      </header>
+
+      <div class="imss-content">
+        <div class="grid-2">
+          <div class="field-group">
+            <label for="fechaBaja">Fecha de baja en el IMSS *</label>
+            <input id="fechaBaja" type="date" required>
+          </div>
+
+          <div class="field-group">
+            <label for="fechaIncapacidad">Fecha de inicio de incapacidad prenatal</label>
+            <input id="fechaIncapacidad" type="date">
+            <span class="hint">Si no la tienes, captura la fecha probable de parto.</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field-group">
+            <label for="fechaParto">Fecha probable de parto (opcional)</label>
+            <input id="fechaParto" type="date">
+            <span class="hint">Se usará para estimar incapacidad prenatal restando 42 días.</span>
+          </div>
+
+          <div class="field-group">
+            <label for="semanas">¿Tienes 30 semanas cotizadas?</label>
+            <select id="semanas">
+              <option value="">Selecciona una opción</option>
+              <option value="si">Sí tengo 30 semanas cotizadas</option>
+              <option value="no">No tengo 30 semanas cotizadas</option>
+              <option value="nose">No lo sé</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnCalcular" type="button">Calcular resultado</button>
+          <button class="btn btn-secondary" id="btnLimpiar" type="button">Limpiar</button>
+          <button class="btn btn-ghost" id="btnReporte" type="button" disabled>Generar reporte del cálculo</button>
+        </div>
+
+        <div class="result-card" id="resultado" aria-live="polite"></div>
+
+        <details>
+          <summary>¿Cómo funciona esta calculadora?</summary>
+          <p>Esta herramienta cuenta <strong>8 semanas (56 días naturales)</strong> desde la fecha de baja en el IMSS para estimar la conservación de derechos.</p>
+          <ul>
+            <li>La <strong>atención médica por maternidad</strong> depende de la vigencia/conservación de derechos, no de un mínimo de semanas.</li>
+            <li>Las <strong>30 semanas cotizadas</strong> se usan para valorar el posible <strong>subsidio por maternidad</strong>.</li>
+            <li>Si no tienes la fecha de incapacidad prenatal, se estima restando <strong>42 días</strong> a la fecha probable de parto.</li>
+          </ul>
+        </details>
+
+        <div class="faq">
+          <h3>Preguntas frecuentes</h3>
+          <div class="faq-item">
+            <strong>1) Si me despidieron embarazada, ¿pierdo el IMSS de inmediato?</strong>
+            <span>No necesariamente. Puede existir conservación de derechos por 8 semanas desde la baja.</span>
+          </div>
+          <div class="faq-item">
+            <strong>2) ¿Las 30 semanas son para atención médica o para subsidio?</strong>
+            <span>Principalmente para valorar el subsidio por maternidad, no para la atención médica durante conservación de derechos.</span>
+          </div>
+          <div class="faq-item">
+            <strong>3) ¿Las 8 semanas se cuentan desde la baja?</strong>
+            <span>Sí, el cómputo orientativo se hace desde la fecha de baja registrada ante el IMSS.</span>
+          </div>
+          <div class="faq-item">
+            <strong>4) ¿Qué pasa si no sé cuántas semanas tengo cotizadas?</strong>
+            <span>Se sugiere verificar en IMSS para definir si además de atención médica podría haber subsidio.</span>
+          </div>
+        </div>
+
+        <div class="seo-text">
+          <h3>Orientación útil sobre despido y embarazo</h3>
+          <p>Esta calculadora te ayuda a orientarte si te despidieron estando embarazada y necesitas saber si aún podrías conservar derechos ante el IMSS. También te muestra si, de forma preliminar, podrías reunir condiciones para subsidio por maternidad según tus semanas cotizadas.</p>
+        </div>
+
+        <div class="legal-note">
+          <strong>Advertencia legal:</strong> Este resultado es orientativo y no sustituye la revisión del caso concreto ante el IMSS, el Centro de Conciliación o asesoría jurídica profesional.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="report-overlay" id="reportOverlay" aria-hidden="true">
+    <div class="report-panel">
+      <div class="report-body" id="reportBody"></div>
+      <div class="report-actions">
+        <button class="btn btn-primary" id="btnImprimir" type="button">Imprimir reporte</button>
+        <button class="btn btn-secondary" id="btnPdf" type="button">Descargar como PDF</button>
+        <button class="btn btn-ghost" id="btnCerrarReporte" type="button">Cerrar reporte</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const el = {
+        fechaBaja: $("fechaBaja"),
+        fechaIncapacidad: $("fechaIncapacidad"),
+        fechaParto: $("fechaParto"),
+        semanas: $("semanas"),
+        resultado: $("resultado"),
+        btnCalcular: $("btnCalcular"),
+        btnLimpiar: $("btnLimpiar"),
+        btnReporte: $("btnReporte"),
+        reportOverlay: $("reportOverlay"),
+        reportBody: $("reportBody"),
+        btnImprimir: $("btnImprimir"),
+        btnPdf: $("btnPdf"),
+        btnCerrarReporte: $("btnCerrarReporte")
+      };
+
+      let ultimoCalculo = null;
+
+      const parseDate = (value) => {
+        if (!value) return null;
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      };
+
+      const formatDate = (date) => {
+        if (!(date instanceof Date)) return "N/D";
+        return date.toLocaleDateString("es-MX", {
+          day: "2-digit", month: "2-digit", year: "numeric"
+        });
+      };
+
+      const addDays = (date, days) => {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        return d;
+      };
+
+      function validar() {
+        if (!el.fechaBaja.value) {
+          return "Debes capturar la fecha de baja en el IMSS.";
+        }
+        if (!el.fechaIncapacidad.value && !el.fechaParto.value) {
+          return "Captura la fecha de incapacidad prenatal o la fecha probable de parto.";
+        }
+        if (!el.semanas.value) {
+          return "Selecciona una respuesta sobre tus 30 semanas cotizadas.";
+        }
+        return "";
+      }
+
+      function calcularResultado() {
+        const error = validar();
+        if (error) {
+          renderError(error);
+          return;
+        }
+
+        const fechaBaja = parseDate(el.fechaBaja.value);
+        let fechaIncapacidad = parseDate(el.fechaIncapacidad.value);
+        const fechaParto = parseDate(el.fechaParto.value);
+
+        let incapacidadEstimada = false;
+        if (!fechaIncapacidad && fechaParto) {
+          fechaIncapacidad = addDays(fechaParto, -42);
+          incapacidadEstimada = true;
+        }
+
+        if (!fechaIncapacidad) {
+          renderError("No fue posible obtener la fecha de incapacidad prenatal para el cálculo.");
+          return;
+        }
+
+        const fechaLimiteConservacion = addDays(fechaBaja, 56);
+        const dentroConservacion = fechaIncapacidad <= fechaLimiteConservacion;
+
+        let semaforo = "red";
+        let titulo = "Probablemente ya no existe conservación de derechos";
+        let mensaje = "La fecha de incapacidad prenatal utilizada parece ocurrir después de las 8 semanas de conservación de derechos.";
+
+        if (dentroConservacion) {
+          if (el.semanas.value === "si") {
+            semaforo = "green";
+            titulo = "Sí podría conservar atención médica y posiblemente subsidio";
+            mensaje = "La incapacidad prenatal ocurre dentro del periodo de conservación de derechos. Además, al indicar 30 semanas cotizadas, podría existir derecho al subsidio por maternidad.";
+          } else if (el.semanas.value === "no") {
+            semaforo = "yellow";
+            titulo = "Podría conservar atención médica, pero no subsidio";
+            mensaje = "La incapacidad prenatal ocurre dentro del periodo de conservación de derechos; sin embargo, al no contar con 30 semanas cotizadas, el subsidio por maternidad probablemente no aplicaría.";
+          } else {
+            semaforo = "yellow";
+            titulo = "Conservación probable, subsidio por definir";
+            mensaje = "La incapacidad prenatal ocurre dentro del periodo de conservación de derechos. Para definir subsidio por maternidad, necesitas verificar si reúnes 30 semanas cotizadas.";
+          }
+        }
+
+        ultimoCalculo = {
+          fechaBaja,
+          fechaIncapacidad,
+          fechaLimiteConservacion,
+          semanas: el.semanas.value,
+          dentroConservacion,
+          semaforo,
+          titulo,
+          mensaje,
+          incapacidadEstimada
+        };
+
+        renderResultado(ultimoCalculo);
+        el.btnReporte.disabled = false;
+      }
+
+      function textoSemanas(valor) {
+        if (valor === "si") return "Sí tengo 30 semanas cotizadas";
+        if (valor === "no") return "No tengo 30 semanas cotizadas";
+        return "No lo sé";
+      }
+
+      function renderError(error) {
+        el.resultado.style.display = "block";
+        el.resultado.innerHTML = `
+          <div class="status-chip status-red">Error de validación</div>
+          <p>${error}</p>
+        `;
+        el.btnReporte.disabled = true;
+      }
+
+      function renderResultado(data) {
+        const cls = data.semaforo === "green"
+          ? "status-green"
+          : data.semaforo === "yellow"
+            ? "status-yellow"
+            : "status-red";
+
+        const semaforoText = data.semaforo === "green"
+          ? "Semáforo: Verde"
+          : data.semaforo === "yellow"
+            ? "Semáforo: Amarillo"
+            : "Semáforo: Rojo";
+
+        el.resultado.style.display = "block";
+        el.resultado.innerHTML = `
+          <div class="status-chip ${cls}">${semaforoText}</div>
+          <h3 style="margin:0 0 6px;">${data.titulo}</h3>
+          <p style="margin:0;">${data.mensaje}</p>
+          <div class="summary-box">
+            <strong>Resumen del cálculo</strong>
+            <ul>
+              <li><strong>Fecha de baja:</strong> ${formatDate(data.fechaBaja)}</li>
+              <li><strong>Fecha de incapacidad prenatal utilizada:</strong> ${formatDate(data.fechaIncapacidad)}${data.incapacidadEstimada ? " (estimada con fecha probable de parto)" : ""}</li>
+              <li><strong>Fecha límite de conservación de derechos:</strong> ${formatDate(data.fechaLimiteConservacion)}</li>
+              <li><strong>30 semanas cotizadas:</strong> ${textoSemanas(data.semanas)}</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      function generarReporte() {
+        if (!ultimoCalculo) return;
+
+        const data = ultimoCalculo;
+        const dentroTxt = data.dentroConservacion
+          ? "La fecha de incapacidad prenatal ocurre dentro del periodo de conservación de derechos (8 semanas desde la baja)."
+          : "La fecha de incapacidad prenatal ocurre fuera del periodo de conservación de derechos (8 semanas desde la baja).";
+
+        el.reportBody.innerHTML = `
+          <h2 class="report-title">REPORTE ORIENTATIVO – Conservación de derechos IMSS por embarazo</h2>
+          <p class="report-subtitle">Macareno en Línea – Herramienta de orientación jurídica laboral</p>
+
+          <section class="report-section">
+            <h4>1) Datos capturados</h4>
+            <ul>
+              <li><strong>Fecha de baja en el IMSS:</strong> ${formatDate(data.fechaBaja)}</li>
+              <li><strong>Fecha de incapacidad prenatal utilizada:</strong> ${formatDate(data.fechaIncapacidad)}${data.incapacidadEstimada ? " (estimada)" : ""}</li>
+              <li><strong>Fecha límite de conservación de derechos:</strong> ${formatDate(data.fechaLimiteConservacion)}</li>
+              <li><strong>Respuesta sobre 30 semanas cotizadas:</strong> ${textoSemanas(data.semanas)}</li>
+            </ul>
+          </section>
+
+          <section class="report-section">
+            <h4>2) Resultado del cálculo</h4>
+            <p>${dentroTxt}</p>
+            <p><strong>Conclusión orientativa:</strong> ${data.mensaje}</p>
+          </section>
+
+          <section class="report-section">
+            <h4>3) Fundamento legal</h4>
+            <p>Ley del Seguro Social:</p>
+            <ul>
+              <li>Artículo 84</li>
+              <li>Artículo 85</li>
+              <li>Artículo 101 fracción II</li>
+              <li>Artículo 109</li>
+            </ul>
+          </section>
+
+          <section class="report-section">
+            <h4>4) Advertencia legal</h4>
+            <p>El presente reporte es orientativo y se genera con base en la información proporcionada por la persona usuaria. No sustituye la verificación del caso concreto ante el IMSS ni la asesoría jurídica profesional.</p>
+            <p class="muted">Fecha de generación: ${new Date().toLocaleString("es-MX")}</p>
+          </section>
+        `;
+
+        el.reportOverlay.style.display = "flex";
+        el.reportOverlay.setAttribute("aria-hidden", "false");
+      }
+
+      function limpiar() {
+        el.fechaBaja.value = "";
+        el.fechaIncapacidad.value = "";
+        el.fechaParto.value = "";
+        el.semanas.value = "";
+        el.resultado.style.display = "none";
+        el.resultado.innerHTML = "";
+        el.btnReporte.disabled = true;
+        ultimoCalculo = null;
+      }
+
+      el.btnCalcular.addEventListener("click", calcularResultado);
+      el.btnLimpiar.addEventListener("click", limpiar);
+      el.btnReporte.addEventListener("click", generarReporte);
+
+      el.btnCerrarReporte.addEventListener("click", () => {
+        el.reportOverlay.style.display = "none";
+        el.reportOverlay.setAttribute("aria-hidden", "true");
+      });
+
+      el.btnImprimir.addEventListener("click", () => window.print());
+
+      // Sin librerías externas: el botón PDF usa el flujo de impresión del navegador.
+      el.btnPdf.addEventListener("click", () => {
+        alert("Para descargar en PDF, usa el cuadro de impresión y elige 'Guardar como PDF'.");
+        window.print();
+      });
+
+      el.reportOverlay.addEventListener("click", (e) => {
+        if (e.target === el.reportOverlay) {
+          el.reportOverlay.style.display = "none";
+          el.reportOverlay.setAttribute("aria-hidden", "true");
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
