@@ -463,7 +463,7 @@
           return {
             color: "yellow",
             titulo: "Conservación probable, subsidio por verificar",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Podría mantenerse la atención médica por maternidad; para definir subsidio económico se debe verificar si reúne 30 semanas cotizadas en los 12 meses previos."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica por maternidad. Sin embargo, como no se tiene certeza sobre las 30 semanas cotizadas en los últimos 12 meses, el subsidio económico por maternidad queda sujeto a verificación."
           };
         }
 
@@ -471,14 +471,14 @@
           return {
             color: "red",
             titulo: "Escenario desfavorable por vigencia",
-            mensaje: "La incapacidad prenatal estimada ocurriría después de que termina la conservación de derechos del IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
+            mensaje: "La incapacidad prenatal estimada ocurriría fuera de las 8 semanas posteriores a la baja en el IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
           };
         }
 
         return {
           color: "red",
           titulo: "Escenario desfavorable",
-          mensaje: "La incapacidad prenatal estimada ocurriría después de que termina la conservación de derechos del IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
+          mensaje: "La incapacidad prenatal estimada ocurriría fuera de las 8 semanas posteriores a la baja en el IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
         };
       }
 
@@ -584,7 +584,9 @@
         const indicadorResultado = data.escenario.color === "green"
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
           : data.escenario.color === "yellow"
-            ? "🟡 Conservación médica probable, sin subsidio por maternidad"
+            ? (data.semanas === "nose"
+              ? "🟡 Conservación médica probable; subsidio sujeto a verificación"
+              : "🟡 Conservación médica probable, sin subsidio por maternidad")
             : "🔴 Caso fuera del periodo de conservación de derechos";
 
         el.resultado.style.display = "block";
@@ -626,7 +628,9 @@
         const indicadorResultado = data.escenario.color === "green"
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
           : data.escenario.color === "yellow"
-            ? "🟡 Conservación médica probable, sin subsidio por maternidad"
+            ? (data.semanas === "nose"
+              ? "🟡 Conservación médica probable; subsidio sujeto a verificación"
+              : "🟡 Conservación médica probable, sin subsidio por maternidad")
             : "🔴 Caso fuera del periodo de conservación de derechos";
 
         el.reportBody.innerHTML = `
