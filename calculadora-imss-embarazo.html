@@ -270,23 +270,32 @@
     }
 
     @media print {
-      body * { visibility: hidden !important; }
-      .report-panel, .report-panel * { visibility: visible !important; }
+      body > *:not(.report-overlay) { display: none !important; }
       .report-overlay {
-        position: static;
+        position: static !important;
+        inset: auto;
         display: block !important;
-        background: transparent;
-        padding: 0;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
       .report-panel {
-        width: 100%;
-        max-height: none;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #pdf-report-content {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
       .report-actions { display: none !important; }
-      @page { size: letter; margin: 15mm; }
+      @page { size: letter; margin: 12mm; }
     }
   </style>
 </head>
@@ -375,7 +384,7 @@
 
   <div class="report-overlay" id="reportOverlay" aria-hidden="true">
     <div class="report-panel">
-      <div class="report-body" id="reportBody"></div>
+      <div class="report-body" id="pdf-report-content"></div>
       <div class="report-actions">
         <button class="btn btn-primary" id="btnImprimir" type="button">Imprimir reporte</button>
         <button class="btn btn-secondary" id="btnPdf" type="button">Descargar PDF</button>
@@ -396,7 +405,7 @@
         btnLimpiar: $("btnLimpiar"),
         btnReporte: $("btnReporte"),
         reportOverlay: $("reportOverlay"),
-        reportBody: $("reportBody"),
+        reportBody: $("pdf-report-content"),
         btnImprimir: $("btnImprimir"),
         btnPdf: $("btnPdf"),
         btnCerrarReporte: $("btnCerrarReporte")
@@ -602,8 +611,29 @@
 
         const data = ultimoCalculo;
         const warnings = data.advertencias.map((a) => `<li>${a}</li>`).join("");
+        const chipClass = data.escenario.color === "green"
+          ? "status-green"
+          : data.escenario.color === "yellow"
+            ? "status-yellow"
+            : "status-red";
+        const chipText = data.escenario.color === "green"
+          ? "Semáforo: Verde"
+          : data.escenario.color === "yellow"
+            ? "Semáforo: Amarillo"
+            : "Semáforo: Rojo";
+        const indicadorResultado = data.dentroConservacion
+          ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
+          : "🔴 Caso fuera del periodo de conservación de derechos";
 
         el.reportBody.innerHTML = `
+          <section class="report-section">
+            <div class="status-chip ${chipClass}">${chipText}</div>
+            <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
+            <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
+            <h4 style="margin:0 0 6px;">${data.escenario.titulo}</h4>
+            <p style="margin:0;">${data.escenario.mensaje}</p>
+          </section>
+
           <h2 class="report-title">REPORTE ORIENTATIVO – Conservación de derechos IMSS por embarazo</h2>
           <p class="report-subtitle">Macareno en Línea – Herramienta de orientación jurídica laboral</p>
 
@@ -672,8 +702,21 @@
         el.reportOverlay.setAttribute("aria-hidden", "true");
       });
 
-      el.btnImprimir.addEventListener("click", () => window.print());
-      el.btnPdf.addEventListener("click", () => window.print());
+      function imprimirReporteComoPdf() {
+        if (!ultimoCalculo) return;
+        el.reportOverlay.style.display = "flex";
+        el.reportOverlay.setAttribute("aria-hidden", "false");
+        el.reportBody.style.display = "block";
+        el.reportBody.style.marginTop = "0";
+        el.reportBody.style.paddingTop = "20px";
+
+        requestAnimationFrame(() => {
+          setTimeout(() => window.print(), 120);
+        });
+      }
+
+      el.btnImprimir.addEventListener("click", imprimirReporteComoPdf);
+      el.btnPdf.addEventListener("click", imprimirReporteComoPdf);
 
       el.reportOverlay.addEventListener("click", (event) => {
         if (event.target === el.reportOverlay) {
