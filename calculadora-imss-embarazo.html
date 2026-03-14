@@ -437,7 +437,7 @@
           return {
             color: "green",
             titulo: "Resultado favorable condicionado",
-            mensaje: "Con base en la fecha probable de parto capturada, la incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Además, al reportar 30 semanas cotizadas, podría existir derecho tanto a atención médica por maternidad como al subsidio por maternidad, sujeto a validación ante IMSS."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad."
           };
         }
 
@@ -445,7 +445,7 @@
           return {
             color: "yellow",
             titulo: "Conservación médica probable, sin subsidio",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría conservar atención médica por maternidad. Sin embargo, al no reunir 30 semanas cotizadas, no existiría derecho al subsidio económico por maternidad."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad. En este caso, al no reunir 30 semanas cotizadas, el subsidio económico no sería procedente."
           };
         }
 
@@ -453,7 +453,7 @@
           return {
             color: "yellow",
             titulo: "Conservación probable, subsidio por verificar",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Podría conservar atención médica por maternidad, pero el subsidio económico depende de verificar si reúne 30 semanas cotizadas en los 12 meses previos al inicio de la incapacidad prenatal."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad. Para confirmar el subsidio, se debe verificar si reúne 30 semanas cotizadas en los 12 meses previos."
           };
         }
 
@@ -461,14 +461,34 @@
           return {
             color: "red",
             titulo: "Escenario desfavorable por vigencia",
-            mensaje: "Aunque se reporten 30 semanas cotizadas, la incapacidad prenatal estimada ocurre después del periodo de conservación de derechos del IMSS, por lo que podría no existir derecho vigente al subsidio por maternidad."
+            mensaje: "La incapacidad prenatal estimada ocurriría después de que termina la conservación de derechos del IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
           };
         }
 
         return {
           color: "red",
           titulo: "Escenario desfavorable",
-          mensaje: "La incapacidad prenatal estimada ocurre después del periodo de conservación de derechos del IMSS. Además, no existe certeza o no se cumple el requisito de 30 semanas cotizadas, por lo que el escenario es desfavorable."
+          mensaje: "La incapacidad prenatal estimada ocurriría después de que termina la conservación de derechos del IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
+        };
+      }
+
+      function construirExplicacionDiferenciaDias(data) {
+        const msPorDia = 1000 * 60 * 60 * 24;
+        const diferenciaDias = Math.round((data.fechaIncapacidad - data.fechaLimite) / msPorDia);
+        const diasAbs = Math.abs(diferenciaDias);
+
+        let texto = "La incapacidad prenatal estimada inicia el mismo día en que termina el periodo de conservación de derechos del IMSS.";
+        if (diferenciaDias > 0) {
+          texto = `Existe una diferencia de ${diasAbs} días posteriores al periodo de conservación de derechos.`;
+        } else if (diferenciaDias < 0) {
+          texto = `La incapacidad prenatal ocurre ${diasAbs} días antes de que termine el periodo de conservación de derechos.`;
+        }
+
+        return {
+          diferenciaDias,
+          diasAbs,
+          textoDetalle: texto,
+          textoReporte: `La incapacidad prenatal estimada iniciaría el ${fmt(data.fechaIncapacidad)}.<br><br>La conservación de derechos del IMSS termina el ${fmt(data.fechaLimite)}.<br><br>${texto}`
         };
       }
 
@@ -527,6 +547,8 @@
           escenario,
           advertencias: construirAdvertencias({ dentroConservacion, semanas: el.semanas.value, alertaInconsistencia })
         };
+
+        ultimoCalculo.detalleDias = construirExplicacionDiferenciaDias(ultimoCalculo);
 
         renderResultado(ultimoCalculo);
         el.btnReporte.disabled = false;
@@ -592,6 +614,7 @@
           <section class="report-section">
             <h4>2. RESULTADO DEL CÁLCULO</h4>
             <p>${data.escenario.mensaje}</p>
+            <p>${data.detalleDias.textoReporte}</p>
           </section>
 
           <section class="report-section">
@@ -608,6 +631,13 @@
           <section class="report-section">
             <h4>4. ADVERTENCIAS APLICABLES</h4>
             <ul>${warnings}</ul>
+          </section>
+
+          <section class="report-section">
+            <h4>5. POSIBLES ESCENARIOS</h4>
+            <p><strong>Escenario 1:</strong><br>Si la persona vuelve a cotizar antes de que termine el periodo de conservación de derechos, podría restablecerse la vigencia ante el IMSS.</p>
+            <p><strong>Escenario 2:</strong><br>Si la incapacidad prenatal inicia después de que termina la conservación de derechos, el IMSS podría negar el subsidio por maternidad.</p>
+            <p><strong>Escenario 3:</strong><br>Cada caso debe ser confirmado directamente ante el IMSS o con asesoría jurídica especializada.</p>
             <p class="muted">Fecha de generación: ${new Date().toLocaleString("es-MX")}</p>
           </section>
         `;
