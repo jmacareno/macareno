@@ -449,7 +449,7 @@
             titulo: "Resultado favorable",
             mensaje: `La incapacidad prenatal estimada ocurre dentro de las 8 semanas posteriores a la baja en el IMSS, por lo que podría mantenerse vigente el derecho a la atención médica.
 
-Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últimos 12 meses, también podría cumplir el requisito para recibir el subsidio por maternidad, siempre que el IMSS confirme estos datos.`
+Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últimos 12 meses, también podría cumplirse el requisito para recibir el subsidio por maternidad, siempre que el IMSS confirme estos datos.`
           };
         }
 
@@ -465,22 +465,22 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
           return {
             color: "yellow",
             titulo: "Conservación probable, subsidio por verificar",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica por maternidad. Sin embargo, como no se tiene certeza sobre las 30 semanas cotizadas en los últimos 12 meses, el subsidio económico por maternidad queda sujeto a verificación."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica.\n\nSin embargo, como no se tiene certeza sobre las 30 semanas cotizadas en los últimos 12 meses, el subsidio por maternidad queda sujeto a verificación."
           };
         }
 
         if (!dentroConservacion && semanas === "si") {
           return {
             color: "red",
-            titulo: "Escenario desfavorable por vigencia",
-            mensaje: "La incapacidad prenatal estimada ocurriría fuera de las 8 semanas posteriores a la baja en el IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
+            titulo: "Escenario desfavorable",
+            mensaje: "Después de la baja laboral, la persona conserva derechos ante el IMSS durante 8 semanas.\n\nSin embargo, la incapacidad prenatal estimada iniciaría después de que termina ese periodo de conservación, por lo que al momento de comenzar la incapacidad o del parto podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
           };
         }
 
         return {
           color: "red",
           titulo: "Escenario desfavorable",
-          mensaje: "La incapacidad prenatal estimada ocurriría fuera de las 8 semanas posteriores a la baja en el IMSS, por lo que podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
+          mensaje: "Después de la baja laboral, la persona conserva derechos ante el IMSS durante 8 semanas.\n\nSin embargo, la incapacidad prenatal estimada iniciaría después de que termina ese periodo de conservación, por lo que al momento de comenzar la incapacidad o del parto podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
         };
       }
 
@@ -587,7 +587,7 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
           : data.escenario.color === "yellow"
             ? (data.semanas === "nose"
-              ? "🟡 Conservación médica probable; subsidio sujeto a verificación"
+              ? "Conservación médica probable; subsidio sujeto a verificación"
               : "🟡 Conservación médica probable, sin subsidio por maternidad")
             : "🔴 Caso fuera del periodo de conservación de derechos";
 
@@ -598,15 +598,45 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
           <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
           <h3 style="margin:0 0 6px;">${data.escenario.titulo}</h3>
           <p style="margin:0; white-space:pre-line;">${data.escenario.mensaje}</p>
-          ${data.escenario.color === "green" && data.semanas === "si" ? `
-            <div class="summary-box" style="margin-top:10px;">
-              <strong>En otras palabras:</strong>
-              <ul>
-                <li>✔ Atención médica IMSS: probable conservación de derechos</li>
-                <li>✔ Subsidio por maternidad: probable procedencia</li>
-              </ul>
-            </div>
-          ` : ""}
+          ${(() => {
+            if (data.escenario.color === "green" && data.semanas === "si") {
+              return `
+                <div class="summary-box" style="margin-top:10px;">
+                  <strong>Derechos estimados según la información proporcionada</strong>
+                  <ul>
+                    <li>🩺 Atención médica IMSS: probable conservación de derechos</li>
+                    <li>💰 Subsidio por maternidad: probable procedencia</li>
+                    <li>👶 Atención del parto en IMSS: probable atención médica para la madre y el recién nacido si el parto ocurre dentro del periodo de vigencia.</li>
+                  </ul>
+                </div>
+              `;
+            }
+            if (data.escenario.color === "yellow" && data.semanas === "nose") {
+              return `
+                <div class="summary-box" style="margin-top:10px;">
+                  <strong>Derechos estimados según la información proporcionada</strong>
+                  <ul>
+                    <li>🩺 Atención médica IMSS: probable conservación de derechos</li>
+                    <li>💰 Subsidio por maternidad: sujeto a verificación</li>
+                    <li>👶 Atención del parto en IMSS: posible, dependiendo de que exista vigencia al momento del parto.</li>
+                  </ul>
+                </div>
+              `;
+            }
+            if (data.escenario.color === "red") {
+              return `
+                <div class="summary-box" style="margin-top:10px;">
+                  <strong>Derechos estimados según la información proporcionada</strong>
+                  <ul>
+                    <li>🩺 Conservación de derechos IMSS: 8 semanas posteriores a la baja</li>
+                    <li>💰 Subsidio por maternidad: no procedente en este escenario</li>
+                    <li>👶 Atención del parto en IMSS: podría no existir derecho vigente si el parto ocurre fuera del periodo de vigencia.</li>
+                  </ul>
+                </div>
+              `;
+            }
+            return "";
+          })()}
           ${alerta}
           <div class="summary-box">
             <strong>Resumen del cálculo</strong>
@@ -640,7 +670,7 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
           : data.escenario.color === "yellow"
             ? (data.semanas === "nose"
-              ? "🟡 Conservación médica probable; subsidio sujeto a verificación"
+              ? "Conservación médica probable; subsidio sujeto a verificación"
               : "🟡 Conservación médica probable, sin subsidio por maternidad")
             : "🔴 Caso fuera del periodo de conservación de derechos";
 
