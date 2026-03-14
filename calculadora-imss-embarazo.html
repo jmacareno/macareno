@@ -411,7 +411,7 @@
         btnCerrarReporte: $("btnCerrarReporte")
       };
 
-      let ultimoCalculo = null;
+      let ultimoResultado = null;
 
       const parseDate = (value) => {
         if (!value) return null;
@@ -433,60 +433,16 @@
         return "No lo sé";
       };
 
-      function validar() {
-        if (!el.fechaBaja.value || !el.fechaParto.value || !el.semanas.value) {
+      function validar(inputData) {
+        if (!inputData.fechaBajaRaw || !inputData.fechaPartoRaw || !inputData.semanas) {
           return "Completa todos los datos obligatorios: fecha de baja, fecha probable de parto y respuesta sobre 30 semanas cotizadas.";
         }
         return "";
       }
 
-      function determinarEscenario(data) {
-        const { dentroConservacion, semanas } = data;
-
-        if (dentroConservacion && semanas === "si") {
-          return {
-            color: "green",
-            titulo: "Resultado favorable",
-            mensaje: `La incapacidad prenatal estimada ocurre dentro de las 8 semanas posteriores a la baja en el IMSS, por lo que podría mantenerse vigente el derecho a la atención médica.
-
-Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últimos 12 meses, también podría cumplirse el requisito para recibir el subsidio por maternidad, siempre que el IMSS confirme estos datos.`
-          };
-        }
-
-        if (dentroConservacion && semanas === "no") {
-          return {
-            color: "yellow",
-            titulo: "Conservación médica probable, sin subsidio",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Esto sugiere conservación de atención médica por maternidad, pero al no reunir 30 semanas cotizadas no habría subsidio económico por maternidad."
-          };
-        }
-
-        if (dentroConservacion && semanas === "nose") {
-          return {
-            color: "yellow",
-            titulo: "Conservación probable, subsidio por verificar",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica.\n\nSin embargo, como no se tiene certeza sobre las 30 semanas cotizadas en los últimos 12 meses, el subsidio por maternidad queda sujeto a verificación."
-          };
-        }
-
-        if (!dentroConservacion && semanas === "si") {
-          return {
-            color: "red",
-            titulo: "Escenario desfavorable",
-            mensaje: "Después de la baja laboral, la persona conserva derechos ante el IMSS durante 8 semanas.\n\nSin embargo, la incapacidad prenatal estimada iniciaría después de que termina ese periodo de conservación, por lo que al momento de comenzar la incapacidad o del parto podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
-          };
-        }
-
-        return {
-          color: "red",
-          titulo: "Escenario desfavorable",
-          mensaje: "Después de la baja laboral, la persona conserva derechos ante el IMSS durante 8 semanas.\n\nSin embargo, la incapacidad prenatal estimada iniciaría después de que termina ese periodo de conservación, por lo que al momento de comenzar la incapacidad o del parto podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha."
-        };
-      }
-
-      function construirExplicacionDiferenciaDias(data) {
+      function construirDiferenciaDias(fechaIncapacidad, fechaLimite) {
         const msPorDia = 1000 * 60 * 60 * 24;
-        const diferenciaDias = Math.round((data.fechaIncapacidad - data.fechaLimite) / msPorDia);
+        const diferenciaDias = Math.round((fechaIncapacidad - fechaLimite) / msPorDia);
         const diasAbs = Math.abs(diferenciaDias);
 
         let texto = "La incapacidad prenatal estimada inicia el mismo día en que termina el periodo de conservación de derechos del IMSS.";
@@ -499,188 +455,192 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
         return {
           diferenciaDias,
           diasAbs,
-          textoDetalle: texto,
-          textoReporte: `La incapacidad prenatal estimada iniciaría el ${fmt(data.fechaIncapacidad)}.<br><br>La conservación de derechos del IMSS termina el ${fmt(data.fechaLimite)}.<br><br>${texto}`
+          textoPantalla: texto,
+          textoReporte: `La incapacidad prenatal estimada iniciaría el ${fmt(fechaIncapacidad)}.<br><br>La conservación de derechos del IMSS termina el ${fmt(fechaLimite)}.<br><br>${texto}`
         };
       }
 
-      function construirAdvertencias(data) {
-        const advertencias = [];
+      function construirEscenario(dentroConservacion, semanas) {
+        if (dentroConservacion && semanas === "si") {
+          return {
+            semaforo: "green",
+            indicador: "🟢 Caso favorable dentro del periodo de conservación de derechos",
+            titulo: "Resultado favorable",
+            textoPrincipal: `La incapacidad prenatal estimada ocurre dentro de las 8 semanas posteriores a la baja en el IMSS, por lo que podría mantenerse vigente el derecho a la atención médica.
 
-        advertencias.push("⚠️ El presente resultado es orientativo y se genera con base en la información proporcionada por la persona usuaria. No sustituye la verificación del caso concreto ante el IMSS ni la asesoría jurídica profesional.");
-        advertencias.push("⚠️ La fecha de inicio de incapacidad prenatal se calculó restando 42 días a la fecha probable de parto, conforme al esquema ordinario del IMSS.");
+Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últimos 12 meses, también podría cumplirse el requisito para recibir el subsidio por maternidad, siempre que el IMSS confirme estos datos.`,
+            derechos: {
+              atencionMedica: "🩺 Atención médica IMSS: existe conservación de derechos.",
+              subsidio: "💰 Subsidio por maternidad: procedería conforme a los datos capturados.",
+              parto: "👶 Atención del parto y del recién nacido: podría brindarse por el IMSS si el parto ocurre dentro del periodo de vigencia o conservación de derechos."
+            }
+          };
+        }
 
-        if (!data.dentroConservacion) {
+        if (dentroConservacion && semanas === "no") {
+          return {
+            semaforo: "yellow",
+            indicador: "🟡 Conservación médica probable, sin subsidio por maternidad",
+            titulo: "Conservación médica, sin subsidio",
+            textoPrincipal: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica.
+
+Sin embargo, al no reunir al menos 30 semanas cotizadas en los últimos 12 meses, el subsidio por maternidad no procede en este escenario.",
+            derechos: {
+              atencionMedica: "🩺 Atención médica IMSS: existe conservación de derechos.",
+              subsidio: "💰 Subsidio por maternidad: no procede en este escenario.",
+              parto: "👶 Atención del parto y del recién nacido: podría brindarse por el IMSS si el parto ocurre dentro del periodo de vigencia o conservación de derechos."
+            }
+          };
+        }
+
+        if (dentroConservacion && semanas === "nose") {
+          return {
+            semaforo: "yellow",
+            indicador: "🟡 Conservación médica probable; subsidio sujeto a verificación",
+            titulo: "Conservación médica; subsidio por verificar",
+            textoPrincipal: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse la atención médica.
+
+Sin embargo, como no se tiene certeza sobre las 30 semanas cotizadas en los últimos 12 meses, el subsidio por maternidad queda sujeto a verificación.",
+            derechos: {
+              atencionMedica: "🩺 Atención médica IMSS: existe conservación de derechos.",
+              subsidio: "💰 Subsidio por maternidad: queda sujeto a verificación de semanas cotizadas.",
+              parto: "👶 Atención del parto y del recién nacido: podría brindarse por el IMSS si el parto ocurre dentro del periodo de vigencia o conservación de derechos."
+            }
+          };
+        }
+
+        return {
+          semaforo: "red",
+          indicador: "🔴 Caso fuera del periodo de conservación de derechos",
+          titulo: "Escenario desfavorable",
+          textoPrincipal: "Después de la baja laboral, la persona conserva derechos ante el IMSS durante 8 semanas.
+
+Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina ese periodo de conservación, por lo que al momento de comenzar la incapacidad o del parto podría no existir derecho vigente a la atención médica ni al subsidio por maternidad, salvo que la persona vuelva a cotizar antes de esa fecha.",
+          derechos: {
+            atencionMedica: "🩺 Conservación de derechos IMSS: existió durante 8 semanas posteriores a la baja.",
+            subsidio: "💰 Subsidio por maternidad: no procede en este escenario.",
+            parto: "👶 Atención del parto y del recién nacido: podría no brindarse por el IMSS si el parto ocurre fuera del periodo de vigencia o conservación de derechos."
+          }
+        };
+      }
+
+      function calculateResult(inputData) {
+        const fechaBaja = parseDate(inputData.fechaBajaRaw);
+        const fechaParto = parseDate(inputData.fechaPartoRaw);
+        const fechaIncapacidadPrenatal = addDays(fechaParto, -42);
+        const fechaLimiteConservacion = addDays(fechaBaja, 56);
+        const dentroConservacion = fechaIncapacidadPrenatal <= fechaLimiteConservacion;
+        const alertaInconsistencia = fechaParto <= fechaBaja;
+
+        const escenario = construirEscenario(dentroConservacion, inputData.semanas);
+        const detalleDias = construirDiferenciaDias(fechaIncapacidadPrenatal, fechaLimiteConservacion);
+
+        const advertencias = [
+          "⚠️ El presente resultado es orientativo y se genera con base en la información proporcionada por la persona usuaria. No sustituye la verificación del caso concreto ante el IMSS ni la asesoría jurídica profesional.",
+          "⚠️ La fecha de inicio de incapacidad prenatal se calculó restando 42 días a la fecha probable de parto, conforme al esquema ordinario del IMSS."
+        ];
+
+        if (!dentroConservacion) {
           advertencias.push("⚠️ Con base en la fecha probable de parto proporcionada, la incapacidad prenatal estimada ocurriría después del periodo de conservación de derechos del IMSS (8 semanas posteriores a la baja).");
         }
-
-        if (data.semanas === "no" || data.semanas === "nose") {
+        if (inputData.semanas === "no" || inputData.semanas === "nose") {
           advertencias.push("⚠️ Para recibir el subsidio económico por maternidad, la Ley del Seguro Social exige al menos 30 semanas cotizadas en los 12 meses previos al inicio de la incapacidad prenatal.");
         }
-
-        if (data.semanas === "nose") {
+        if (inputData.semanas === "nose") {
           advertencias.push("⚠️ Se recomienda verificar las semanas cotizadas en el historial del IMSS.");
         }
-
-        if (data.alertaInconsistencia) {
+        if (alertaInconsistencia) {
           advertencias.push("⚠️ Los datos capturados deben revisarse, porque generan un escenario inconsistente.");
         }
 
-        return advertencias;
-      }
-
-      function calcular() {
-        const error = validar();
-        if (error) {
-          el.resultado.style.display = "block";
-          el.resultado.innerHTML = `<div class="status-chip status-red">Error de validación</div><p>${error}</p>`;
-          el.btnReporte.disabled = true;
-          ultimoCalculo = null;
-          return;
-        }
-
-        const fechaBaja = parseDate(el.fechaBaja.value);
-        const fechaParto = parseDate(el.fechaParto.value);
-        const fechaIncapacidad = addDays(fechaParto, -42);
-        const fechaLimite = addDays(fechaBaja, 56);
-        const dentroConservacion = fechaIncapacidad <= fechaLimite;
-        const alertaInconsistencia = fechaParto <= fechaBaja;
-
-        const escenario = determinarEscenario({ dentroConservacion, semanas: el.semanas.value });
-
-        ultimoCalculo = {
-          fechaBaja,
-          fechaParto,
-          fechaIncapacidad,
-          fechaLimite,
-          semanas: el.semanas.value,
+        return {
+          semaforo: escenario.semaforo,
+          indicador: escenario.indicador,
+          titulo: escenario.titulo,
+          textoPrincipal: escenario.textoPrincipal,
+          derechos: escenario.derechos,
+          resumenCalculo: {
+            fechaBaja,
+            fechaParto,
+            fechaIncapacidadPrenatal,
+            fechaLimiteConservacion,
+            diferenciaDias: detalleDias
+          },
+          fundamentoLegal: ["Artículo 84", "Artículo 85", "Artículo 101 fracción II", "Artículo 109"],
+          advertencias,
+          inputData,
           dentroConservacion,
-          alertaInconsistencia,
-          escenario,
-          advertencias: construirAdvertencias({ dentroConservacion, semanas: el.semanas.value, alertaInconsistencia })
+          alertaInconsistencia
         };
-
-        ultimoCalculo.detalleDias = construirExplicacionDiferenciaDias(ultimoCalculo);
-
-        renderResultado(ultimoCalculo);
-        el.btnReporte.disabled = false;
       }
 
-      function renderResultado(data) {
-        const chipClass = data.escenario.color === "green"
+      function buildResultHtml(resultData) {
+        const chipClass = resultData.semaforo === "green"
           ? "status-green"
-          : data.escenario.color === "yellow"
+          : resultData.semaforo === "yellow"
             ? "status-yellow"
             : "status-red";
-
-        const chipText = data.escenario.color === "green"
+        const chipText = resultData.semaforo === "green"
           ? "Semáforo: Verde"
-          : data.escenario.color === "yellow"
+          : resultData.semaforo === "yellow"
             ? "Semáforo: Amarillo"
             : "Semáforo: Rojo";
 
-        const alerta = data.alertaInconsistencia
+        const alerta = resultData.alertaInconsistencia
           ? '<div class="alert-box">⚠️ Los datos capturados deben revisarse, porque generan un escenario inconsistente.</div>'
           : "";
 
-        const indicadorResultado = data.escenario.color === "green"
-          ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
-          : data.escenario.color === "yellow"
-            ? (data.semanas === "nose"
-              ? "Conservación médica probable; subsidio sujeto a verificación"
-              : "🟡 Conservación médica probable, sin subsidio por maternidad")
-            : "🔴 Caso fuera del periodo de conservación de derechos";
-
-        el.resultado.style.display = "block";
-        el.resultado.innerHTML = `
+        return `
           <div class="status-chip ${chipClass}">${chipText}</div>
           <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
-          <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
-          <h3 style="margin:0 0 6px;">${data.escenario.titulo}</h3>
-          <p style="margin:0; white-space:pre-line;">${data.escenario.mensaje}</p>
-          ${(() => {
-            if (data.escenario.color === "green" && data.semanas === "si") {
-              return `
-                <div class="summary-box" style="margin-top:10px;">
-                  <strong>Derechos estimados según la información proporcionada</strong>
-                  <ul>
-                    <li>🩺 Atención médica IMSS: probable conservación de derechos</li>
-                    <li>💰 Subsidio por maternidad: probable procedencia</li>
-                    <li>👶 Atención del parto en IMSS: probable atención médica para la madre y el recién nacido si el parto ocurre dentro del periodo de vigencia.</li>
-                  </ul>
-                </div>
-              `;
-            }
-            if (data.escenario.color === "yellow" && data.semanas === "nose") {
-              return `
-                <div class="summary-box" style="margin-top:10px;">
-                  <strong>Derechos estimados según la información proporcionada</strong>
-                  <ul>
-                    <li>🩺 Atención médica IMSS: probable conservación de derechos</li>
-                    <li>💰 Subsidio por maternidad: sujeto a verificación</li>
-                    <li>👶 Atención del parto en IMSS: posible, dependiendo de que exista vigencia al momento del parto.</li>
-                  </ul>
-                </div>
-              `;
-            }
-            if (data.escenario.color === "red") {
-              return `
-                <div class="summary-box" style="margin-top:10px;">
-                  <strong>Derechos estimados según la información proporcionada</strong>
-                  <ul>
-                    <li>🩺 Conservación de derechos IMSS: 8 semanas posteriores a la baja</li>
-                    <li>💰 Subsidio por maternidad: no procedente en este escenario</li>
-                    <li>👶 Atención del parto en IMSS: podría no existir derecho vigente si el parto ocurre fuera del periodo de vigencia.</li>
-                  </ul>
-                </div>
-              `;
-            }
-            return "";
-          })()}
+          <p style="margin:0 0 8px; font-weight:700;">${resultData.indicador}</p>
+          <h3 style="margin:0 0 6px;">${resultData.titulo}</h3>
+          <p style="margin:0; white-space:pre-line;">${resultData.textoPrincipal}</p>
+          <div class="summary-box" style="margin-top:10px;">
+            <strong>Derechos estimados según la información proporcionada</strong>
+            <ul>
+              <li>${resultData.derechos.atencionMedica}</li>
+              <li>${resultData.derechos.subsidio}</li>
+              <li>${resultData.derechos.parto}</li>
+            </ul>
+          </div>
           ${alerta}
           <div class="summary-box">
             <strong>Resumen del cálculo</strong>
             <ul>
-              <li><strong>Fecha de baja en IMSS:</strong> ${fmt(data.fechaBaja)}</li>
-              <li><strong>Fecha probable de parto:</strong> ${fmt(data.fechaParto)}</li>
-              <li><strong>Fecha estimada de incapacidad prenatal:</strong> ${fmt(data.fechaIncapacidad)}</li>
-              <li><strong>Fecha límite de conservación de derechos:</strong> ${fmt(data.fechaLimite)}</li>
-              <li><strong>Respuesta de 30 semanas cotizadas:</strong> ${textoSemanas(data.semanas)}</li>
+              <li><strong>Fecha de baja en IMSS:</strong> ${fmt(resultData.resumenCalculo.fechaBaja)}</li>
+              <li><strong>Fecha probable de parto:</strong> ${fmt(resultData.resumenCalculo.fechaParto)}</li>
+              <li><strong>Fecha estimada de incapacidad prenatal:</strong> ${fmt(resultData.resumenCalculo.fechaIncapacidadPrenatal)}</li>
+              <li><strong>Fecha límite de conservación de derechos:</strong> ${fmt(resultData.resumenCalculo.fechaLimiteConservacion)}</li>
+              <li><strong>Respuesta de 30 semanas cotizadas:</strong> ${textoSemanas(resultData.inputData.semanas)}</li>
             </ul>
           </div>
         `;
       }
 
-      function generarReporte() {
-        if (!ultimoCalculo) return;
-
-        const data = ultimoCalculo;
-        const warnings = data.advertencias.map((a) => `<li>${a}</li>`).join("");
-        const chipClass = data.escenario.color === "green"
+      function buildReportHtml(resultData) {
+        const chipClass = resultData.semaforo === "green"
           ? "status-green"
-          : data.escenario.color === "yellow"
+          : resultData.semaforo === "yellow"
             ? "status-yellow"
             : "status-red";
-        const chipText = data.escenario.color === "green"
+        const chipText = resultData.semaforo === "green"
           ? "Semáforo: Verde"
-          : data.escenario.color === "yellow"
+          : resultData.semaforo === "yellow"
             ? "Semáforo: Amarillo"
             : "Semáforo: Rojo";
-        const indicadorResultado = data.escenario.color === "green"
-          ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
-          : data.escenario.color === "yellow"
-            ? (data.semanas === "nose"
-              ? "Conservación médica probable; subsidio sujeto a verificación"
-              : "🟡 Conservación médica probable, sin subsidio por maternidad")
-            : "🔴 Caso fuera del periodo de conservación de derechos";
 
-        el.reportBody.innerHTML = `
+        const warnings = resultData.advertencias.map((a) => `<li>${a}</li>`).join("");
+        const fundamentos = resultData.fundamentoLegal.map((f) => `<li>${f}</li>`).join("");
+        const diferencia = resultData.resumenCalculo.diferenciaDias;
+
+        return `
           <section class="report-section">
             <div class="status-chip ${chipClass}">${chipText}</div>
             <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
-            <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
-            <h4 style="margin:0 0 6px;">${data.escenario.titulo}</h4>
-            <p style="margin:0;">${data.escenario.mensaje}</p>
+            <p style="margin:0 0 8px; font-weight:700;">${resultData.indicador}</p>
+            <h4 style="margin:0 0 6px;">${resultData.titulo}</h4>
+            <p style="margin:0; white-space:pre-line;">${resultData.textoPrincipal}</p>
           </section>
 
           <h2 class="report-title">REPORTE ORIENTATIVO – Conservación de derechos IMSS por embarazo</h2>
@@ -689,47 +649,82 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
           <section class="report-section">
             <h4>1. DATOS CAPTURADOS</h4>
             <ul>
-              <li><strong>Fecha de baja en el IMSS:</strong> ${fmt(data.fechaBaja)}</li>
-              <li><strong>Fecha probable de parto:</strong> ${fmt(data.fechaParto)}</li>
-              <li><strong>Fecha estimada de incapacidad prenatal:</strong> ${fmt(data.fechaIncapacidad)}</li>
-              <li><strong>Fecha límite de conservación de derechos:</strong> ${fmt(data.fechaLimite)}</li>
-              <li><strong>Respuesta sobre 30 semanas cotizadas:</strong> ${textoSemanas(data.semanas)}</li>
+              <li><strong>Fecha de baja en el IMSS:</strong> ${fmt(resultData.resumenCalculo.fechaBaja)}</li>
+              <li><strong>Fecha probable de parto:</strong> ${fmt(resultData.resumenCalculo.fechaParto)}</li>
+              <li><strong>Fecha estimada de incapacidad prenatal:</strong> ${fmt(resultData.resumenCalculo.fechaIncapacidadPrenatal)}</li>
+              <li><strong>Fecha límite de conservación de derechos:</strong> ${fmt(resultData.resumenCalculo.fechaLimiteConservacion)}</li>
+              <li><strong>Respuesta sobre 30 semanas cotizadas:</strong> ${textoSemanas(resultData.inputData.semanas)}</li>
             </ul>
           </section>
 
           <section class="report-section">
-            <h4>2. RESULTADO DEL CÁLCULO</h4>
-            <p>${data.escenario.mensaje}</p>
-            <p>${data.detalleDias.textoReporte}</p>
+            <h4>2. RESULTADO DEL ANÁLISIS</h4>
+            <p style="white-space:pre-line;">${resultData.textoPrincipal}</p>
           </section>
 
           <section class="report-section">
-            <h4>3. FUNDAMENTO LEGAL</h4>
-            <p>Ley del Seguro Social:</p>
+            <h4>3. DERECHOS ESTIMADOS CONFORME A LA INFORMACIÓN PROPORCIONADA</h4>
             <ul>
-              <li>Artículo 84</li>
-              <li>Artículo 85</li>
-              <li>Artículo 101 fracción II</li>
-              <li>Artículo 109</li>
+              <li>${resultData.derechos.atencionMedica}</li>
+              <li>${resultData.derechos.subsidio}</li>
+              <li>${resultData.derechos.parto}</li>
             </ul>
           </section>
 
           <section class="report-section">
-            <h4>4. ADVERTENCIAS APLICABLES</h4>
-            <ul>${warnings}</ul>
+            <h4>4. RESUMEN DEL CÁLCULO</h4>
+            <p>${diferencia.textoReporte}</p>
           </section>
 
           <section class="report-section">
-            <h4>5. POSIBLES ESCENARIOS ORIENTATIVOS</h4>
-            <p><strong>Escenario 1:</strong><br>Si la persona vuelve a cotizar antes de que termine el periodo de conservación de derechos, podría restablecerse la vigencia ante el IMSS.</p>
-            <p><strong>Escenario 2:</strong><br>Si la incapacidad prenatal inicia después de que termina la conservación de derechos, el IMSS podría negar el subsidio por maternidad.</p>
-            <p><strong>Escenario 3:</strong><br>Cada caso debe ser confirmado directamente ante el IMSS o con asesoría jurídica especializada.</p>
+            <h4>5. FUNDAMENTO LEGAL</h4>
+            <p>Ley del Seguro Social:</p>
+            <ul>${fundamentos}</ul>
+          </section>
+
+          <section class="report-section">
+            <h4>6. ADVERTENCIAS APLICABLES</h4>
+            <ul>${warnings}</ul>
             <p class="muted">Fecha de generación: ${new Date().toLocaleString("es-MX")}</p>
           </section>
         `;
+      }
 
+      function renderScreen(resultData) {
+        el.resultado.style.display = "block";
+        el.resultado.innerHTML = buildResultHtml(resultData);
+      }
+
+      function generatePDF(resultData) {
+        el.reportBody.innerHTML = buildReportHtml(resultData);
         el.reportOverlay.style.display = "flex";
         el.reportOverlay.setAttribute("aria-hidden", "false");
+      }
+
+      function calcular() {
+        const inputData = {
+          fechaBajaRaw: el.fechaBaja.value,
+          fechaPartoRaw: el.fechaParto.value,
+          semanas: el.semanas.value
+        };
+
+        const error = validar(inputData);
+        if (error) {
+          el.resultado.style.display = "block";
+          el.resultado.innerHTML = `<div class="status-chip status-red">Error de validación</div><p>${error}</p>`;
+          el.btnReporte.disabled = true;
+          ultimoResultado = null;
+          return;
+        }
+
+        ultimoResultado = calculateResult(inputData);
+        renderScreen(ultimoResultado);
+        el.btnReporte.disabled = false;
+      }
+
+      function generarReporte() {
+        if (!ultimoResultado) return;
+        generatePDF(ultimoResultado);
       }
 
       function limpiar() {
@@ -739,7 +734,7 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
         el.resultado.style.display = "none";
         el.resultado.innerHTML = "";
         el.btnReporte.disabled = true;
-        ultimoCalculo = null;
+        ultimoResultado = null;
       }
 
       el.btnCalcular.addEventListener("click", calcular);
@@ -752,9 +747,8 @@ Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últ
       });
 
       function imprimirReporteComoPdf() {
-        if (!ultimoCalculo) return;
-        el.reportOverlay.style.display = "flex";
-        el.reportOverlay.setAttribute("aria-hidden", "false");
+        if (!ultimoResultado) return;
+        generatePDF(ultimoResultado);
         el.reportBody.style.display = "block";
         el.reportBody.style.marginTop = "0";
         el.reportBody.style.paddingTop = "20px";
