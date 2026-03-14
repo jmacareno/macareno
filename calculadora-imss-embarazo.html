@@ -455,7 +455,7 @@
           return {
             color: "yellow",
             titulo: "Conservación médica probable, sin subsidio",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad. En este caso, al no reunir 30 semanas cotizadas, el subsidio económico no sería procedente."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Esto sugiere conservación de atención médica por maternidad, pero al no reunir 30 semanas cotizadas no habría subsidio económico por maternidad."
           };
         }
 
@@ -463,7 +463,7 @@
           return {
             color: "yellow",
             titulo: "Conservación probable, subsidio por verificar",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad. Para confirmar el subsidio, se debe verificar si reúne 30 semanas cotizadas en los 12 meses previos."
+            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS. Podría mantenerse la atención médica por maternidad; para definir subsidio económico se debe verificar si reúne 30 semanas cotizadas en los 12 meses previos."
           };
         }
 
@@ -581,9 +581,11 @@
           ? '<div class="alert-box">⚠️ Los datos capturados deben revisarse, porque generan un escenario inconsistente.</div>'
           : "";
 
-        const indicadorResultado = data.dentroConservacion
+        const indicadorResultado = data.escenario.color === "green"
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
-          : "🔴 Caso fuera del periodo de conservación de derechos";
+          : data.escenario.color === "yellow"
+            ? "🟡 Conservación médica probable, sin subsidio por maternidad"
+            : "🔴 Caso fuera del periodo de conservación de derechos";
 
         el.resultado.style.display = "block";
         el.resultado.innerHTML = `
@@ -621,9 +623,11 @@
           : data.escenario.color === "yellow"
             ? "Semáforo: Amarillo"
             : "Semáforo: Rojo";
-        const indicadorResultado = data.dentroConservacion
+        const indicadorResultado = data.escenario.color === "green"
           ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
-          : "🔴 Caso fuera del periodo de conservación de derechos";
+          : data.escenario.color === "yellow"
+            ? "🟡 Conservación médica probable, sin subsidio por maternidad"
+            : "🔴 Caso fuera del periodo de conservación de derechos";
 
         el.reportBody.innerHTML = `
           <section class="report-section">
