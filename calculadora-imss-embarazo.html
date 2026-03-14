@@ -312,13 +312,14 @@
         </div>
 
         <div class="field-group">
-          <label for="semanas">¿Tienes 30 semanas cotizadas en los 12 meses previos al inicio de incapacidad prenatal? *</label>
+          <label for="semanas">¿Sabes si tienes al menos 30 semanas cotizadas en el IMSS durante los últimos 12 meses? *</label>
           <select id="semanas" required>
             <option value="">Selecciona una opción</option>
-            <option value="si">Sí tengo 30 semanas cotizadas en los 12 meses previos al inicio de la incapacidad prenatal</option>
+            <option value="si">Sí, tengo 30 semanas cotizadas o más</option>
             <option value="no">No tengo 30 semanas cotizadas</option>
             <option value="nose">No lo sé</option>
           </select>
+          <span class="hint">Nota: Para recibir el subsidio por maternidad, el IMSS exige al menos 30 semanas cotizadas en los 12 meses previos al inicio de la incapacidad prenatal.</span>
         </div>
 
         <div class="btn-row">
@@ -418,7 +419,7 @@
       const fmt = (date) => date.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit", year: "numeric" });
 
       const textoSemanas = (value) => {
-        if (value === "si") return "Sí tengo 30 semanas cotizadas en los 12 meses previos al inicio de la incapacidad prenatal";
+        if (value === "si") return "Sí, tengo 30 semanas cotizadas o más";
         if (value === "no") return "No tengo 30 semanas cotizadas";
         return "No lo sé";
       };
@@ -571,9 +572,15 @@
           ? '<div class="alert-box">⚠️ Los datos capturados deben revisarse, porque generan un escenario inconsistente.</div>'
           : "";
 
+        const indicadorResultado = data.dentroConservacion
+          ? "🟢 Caso favorable dentro del periodo de conservación de derechos"
+          : "🔴 Caso fuera del periodo de conservación de derechos";
+
         el.resultado.style.display = "block";
         el.resultado.innerHTML = `
           <div class="status-chip ${chipClass}">${chipText}</div>
+          <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
+          <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
           <h3 style="margin:0 0 6px;">${data.escenario.titulo}</h3>
           <p style="margin:0;">${data.escenario.mensaje}</p>
           ${alerta}
@@ -634,7 +641,7 @@
           </section>
 
           <section class="report-section">
-            <h4>5. POSIBLES ESCENARIOS</h4>
+            <h4>5. POSIBLES ESCENARIOS ORIENTATIVOS</h4>
             <p><strong>Escenario 1:</strong><br>Si la persona vuelve a cotizar antes de que termine el periodo de conservación de derechos, podría restablecerse la vigencia ante el IMSS.</p>
             <p><strong>Escenario 2:</strong><br>Si la incapacidad prenatal inicia después de que termina la conservación de derechos, el IMSS podría negar el subsidio por maternidad.</p>
             <p><strong>Escenario 3:</strong><br>Cada caso debe ser confirmado directamente ante el IMSS o con asesoría jurídica especializada.</p>
