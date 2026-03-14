@@ -321,6 +321,12 @@
         </div>
 
         <div class="field-group">
+          <label for="nombreUsuario">Nombre o alias (opcional)</label>
+          <input id="nombreUsuario" type="text" placeholder="Este nombre aparecerá en el reporte generado">
+          <span class="hint">Esta calculadora no almacena información personal. El nombre capturado se utiliza únicamente para personalizar el reporte generado en su dispositivo.</span>
+        </div>
+
+        <div class="field-group">
           <label for="semanas">¿Sabes si tienes al menos 30 semanas cotizadas en el IMSS durante los últimos 12 meses? *</label>
           <select id="semanas" required>
             <option value="">Selecciona una opción</option>
@@ -399,6 +405,7 @@
       const el = {
         fechaBaja: $("fechaBaja"),
         fechaParto: $("fechaParto"),
+        nombreUsuario: $("nombreUsuario"),
         semanas: $("semanas"),
         resultado: $("resultado"),
         btnCalcular: $("btnCalcular"),
@@ -570,7 +577,9 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
           advertencias,
           inputData,
           dentroConservacion,
-          alertaInconsistencia
+          alertaInconsistencia,
+          nombreUsuario: (inputData.nombreUsuarioRaw || "").trim(),
+          fechaGeneracionReporte: new Date()
         };
       }
 
@@ -590,12 +599,21 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
           ? '<div class="alert-box">⚠️ Los datos capturados deben revisarse, porque generan un escenario inconsistente.</div>'
           : "";
 
+        const encabezadoPersonalizado = resultData.nombreUsuario
+          ? `Reporte orientativo para: ${resultData.nombreUsuario}`
+          : "Reporte orientativo";
+
+        const warnings = resultData.advertencias.map((a) => `<li>${a}</li>`).join("");
+        const fundamentos = resultData.fundamentoLegal.map((f) => `<li>${f}</li>`).join("");
+
         return `
+          <p style="margin:0 0 8px;"><strong>${encabezadoPersonalizado}</strong></p>
           <div class="status-chip ${chipClass}">${chipText}</div>
           <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
           <p style="margin:0 0 8px; font-weight:700;">${resultData.indicador}</p>
           <h3 style="margin:0 0 6px;">${resultData.titulo}</h3>
           <p style="margin:0; white-space:pre-line;">${resultData.textoPrincipal}</p>
+
           <div class="summary-box" style="margin-top:10px;">
             <strong>Derechos estimados según la información proporcionada</strong>
             <ul>
@@ -603,8 +621,11 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
               <li>${resultData.derechos.subsidio}</li>
               <li>${resultData.derechos.parto}</li>
             </ul>
+            <p style="margin:8px 0 0;">La procedencia definitiva de estos derechos debe ser corroborada por el IMSS con base en sus registros oficiales.</p>
           </div>
+
           ${alerta}
+
           <div class="summary-box">
             <strong>Resumen del cálculo</strong>
             <ul>
@@ -613,7 +634,18 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
               <li><strong>Fecha estimada de incapacidad prenatal:</strong> ${fmt(resultData.resumenCalculo.fechaIncapacidadPrenatal)}</li>
               <li><strong>Fecha límite de conservación de derechos:</strong> ${fmt(resultData.resumenCalculo.fechaLimiteConservacion)}</li>
               <li><strong>Respuesta de 30 semanas cotizadas:</strong> ${textoSemanas(resultData.inputData.semanas)}</li>
+              <li><strong>Diferencia de días:</strong> ${resultData.resumenCalculo.diferenciaDias.textoPantalla}</li>
             </ul>
+          </div>
+
+          <div class="summary-box">
+            <strong>Fundamento legal</strong>
+            <ul>${fundamentos}</ul>
+          </div>
+
+          <div class="summary-box">
+            <strong>Advertencias aplicables</strong>
+            <ul>${warnings}</ul>
           </div>
         `;
       }
@@ -632,9 +664,14 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
 
         const warnings = resultData.advertencias.map((a) => `<li>${a}</li>`).join("");
         const fundamentos = resultData.fundamentoLegal.map((f) => `<li>${f}</li>`).join("");
-        const diferencia = resultData.resumenCalculo.diferenciaDias;
 
         return `
+          <h2 class="report-title">MACARENO EN LÍNEA</h2>
+          <p class="report-subtitle">Calculadora de conservación de derechos IMSS por embarazo</p>
+          <p style="margin:0 0 10px;"><strong>Reporte orientativo</strong></p>
+          ${resultData.nombreUsuario ? `<p style="margin:0 0 8px;"><strong>Nombre:</strong> ${resultData.nombreUsuario}</p>` : ""}
+          <p style="margin:0 0 14px;"><strong>Fecha de generación del reporte:</strong> ${resultData.fechaGeneracionReporte.toLocaleString("es-MX")}</p>
+
           <section class="report-section">
             <div class="status-chip ${chipClass}">${chipText}</div>
             <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
@@ -643,11 +680,8 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
             <p style="margin:0; white-space:pre-line;">${resultData.textoPrincipal}</p>
           </section>
 
-          <h2 class="report-title">REPORTE ORIENTATIVO – Conservación de derechos IMSS por embarazo</h2>
-          <p class="report-subtitle">Macareno en Línea – Herramienta de orientación jurídica laboral</p>
-
           <section class="report-section">
-            <h4>1. DATOS CAPTURADOS</h4>
+            <h4>1. Datos capturados</h4>
             <ul>
               <li><strong>Fecha de baja en el IMSS:</strong> ${fmt(resultData.resumenCalculo.fechaBaja)}</li>
               <li><strong>Fecha probable de parto:</strong> ${fmt(resultData.resumenCalculo.fechaParto)}</li>
@@ -658,34 +692,33 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
           </section>
 
           <section class="report-section">
-            <h4>2. RESULTADO DEL ANÁLISIS</h4>
+            <h4>2. Resultado del análisis</h4>
             <p style="white-space:pre-line;">${resultData.textoPrincipal}</p>
           </section>
 
           <section class="report-section">
-            <h4>3. DERECHOS ESTIMADOS CONFORME A LA INFORMACIÓN PROPORCIONADA</h4>
+            <h4>3. Derechos estimados conforme a la información proporcionada</h4>
             <ul>
               <li>${resultData.derechos.atencionMedica}</li>
               <li>${resultData.derechos.subsidio}</li>
               <li>${resultData.derechos.parto}</li>
             </ul>
+            <p>La procedencia definitiva de estos derechos debe ser corroborada por el IMSS con base en sus registros oficiales.</p>
           </section>
 
           <section class="report-section">
-            <h4>4. RESUMEN DEL CÁLCULO</h4>
-            <p>${diferencia.textoReporte}</p>
+            <h4>4. Resumen del cálculo</h4>
+            <p>${resultData.resumenCalculo.diferenciaDias.textoReporte}</p>
           </section>
 
           <section class="report-section">
-            <h4>5. FUNDAMENTO LEGAL</h4>
-            <p>Ley del Seguro Social:</p>
+            <h4>5. Fundamento legal</h4>
             <ul>${fundamentos}</ul>
           </section>
 
           <section class="report-section">
-            <h4>6. ADVERTENCIAS APLICABLES</h4>
+            <h4>6. Advertencias aplicables</h4>
             <ul>${warnings}</ul>
-            <p class="muted">Fecha de generación: ${new Date().toLocaleString("es-MX")}</p>
           </section>
         `;
       }
@@ -705,6 +738,7 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
         const inputData = {
           fechaBajaRaw: el.fechaBaja.value,
           fechaPartoRaw: el.fechaParto.value,
+          nombreUsuarioRaw: el.nombreUsuario.value,
           semanas: el.semanas.value
         };
 
@@ -730,6 +764,7 @@ Sin embargo, la incapacidad prenatal estimada iniciaría después de que termina
       function limpiar() {
         el.fechaBaja.value = "";
         el.fechaParto.value = "";
+        el.nombreUsuario.value = "";
         el.semanas.value = "";
         el.resultado.style.display = "none";
         el.resultado.innerHTML = "";
