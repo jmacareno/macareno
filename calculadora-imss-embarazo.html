@@ -446,8 +446,10 @@
         if (dentroConservacion && semanas === "si") {
           return {
             color: "green",
-            titulo: "Resultado favorable condicionado",
-            mensaje: "La incapacidad prenatal estimada ocurre dentro del periodo de conservación de derechos del IMSS, por lo que podría mantenerse el acceso a la atención médica y, si se cumplen los demás requisitos, al subsidio por maternidad."
+            titulo: "Resultado favorable",
+            mensaje: `La incapacidad prenatal estimada ocurre dentro de las 8 semanas posteriores a la baja en el IMSS, por lo que podría mantenerse vigente el derecho a la atención médica.
+
+Además, al indicar que sí cuenta con al menos 30 semanas cotizadas en los últimos 12 meses, también podría cumplir el requisito para recibir el subsidio por maternidad, siempre que el IMSS confirme estos datos.`
           };
         }
 
@@ -595,7 +597,16 @@
           <p style="margin:0 0 2px;"><strong>Resultado del análisis</strong></p>
           <p style="margin:0 0 8px; font-weight:700;">${indicadorResultado}</p>
           <h3 style="margin:0 0 6px;">${data.escenario.titulo}</h3>
-          <p style="margin:0;">${data.escenario.mensaje}</p>
+          <p style="margin:0; white-space:pre-line;">${data.escenario.mensaje}</p>
+          ${data.escenario.color === "green" && data.semanas === "si" ? `
+            <div class="summary-box" style="margin-top:10px;">
+              <strong>En otras palabras:</strong>
+              <ul>
+                <li>✔ Atención médica IMSS: probable conservación de derechos</li>
+                <li>✔ Subsidio por maternidad: probable procedencia</li>
+              </ul>
+            </div>
+          ` : ""}
           ${alerta}
           <div class="summary-box">
             <strong>Resumen del cálculo</strong>
